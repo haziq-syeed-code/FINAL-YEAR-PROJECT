@@ -1,0 +1,44 @@
+SENTIMENT MODEL EVALUATION REPORT
+=================================================================
+Model        : cardiffnlp/twitter-roberta-base-sentiment-latest
+Dataset      : Indian Political Tweets (2026)
+Sample Size  : 129 manually annotated tweets
+Skipped      : 21 (US/foreign noise)
+
+Accuracy BEFORE sarcasm correction : 0.667 (66.7%)
+Accuracy AFTER  sarcasm correction : 0.760 (76.0%)
+Improvement                        : +9.3 percentage points
+
+Per-Class Metrics BEFORE:
+              precision    recall  f1-score   support
+
+    Positive      0.667     0.143     0.235        14
+     Neutral      0.508     0.750     0.606        40
+    Negative      0.806     0.720     0.761        75
+
+    accuracy                          0.667       129
+   macro avg      0.660     0.538     0.534       129
+weighted avg      0.699     0.667     0.656       129
+
+Per-Class Metrics AFTER:
+              precision    recall  f1-score   support
+
+    Positive      1.000     0.143     0.250        14
+     Neutral      0.636     0.700     0.667        40
+    Negative      0.819     0.907     0.861        75
+
+    accuracy                          0.760       129
+   macro avg      0.819     0.583     0.592       129
+weighted avg      0.782     0.760     0.734       129
+
+Confusion Matrix BEFORE (rows=actual, cols=predicted):
+               Positive    Neutral   Negative
+Positive              2          9          3
+Neutral               0         30         10
+Negative              1         20         54
+
+Confusion Matrix AFTER (rows=actual, cols=predicted):
+               Positive    Neutral   Negative
+Positive              2          9          3
+Neutral               0         28         12
+Negative              0          7         68

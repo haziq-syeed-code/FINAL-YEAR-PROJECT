@@ -31,6 +31,8 @@ import re
 
 import pandas as pd
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Use GPU 0 for any future torch operations (if available)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
