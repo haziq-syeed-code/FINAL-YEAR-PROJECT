@@ -4,7 +4,7 @@ Step 4: Lightweight Sarcasm Detection for Indian Political Tweets
 =============================================================================
 Project : Twitter Sentiment Analysis with Lightweight Sarcasm Detection
 Script  : scripts/sarcasm_detection.py
-Input   : "data/political_tweets_final.csv"
+Input   : "data/political_tweets_sentiment.csv"
 Output  : "data/political_tweets_final.csv"
 
 =============================================================================
@@ -45,7 +45,7 @@ import pandas as pd
 # CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
 
-INPUT_CSV  = "data/political_tweets_final.csv"
+INPUT_CSV  = "data/political_tweets_sentiment.csv"
 OUTPUT_CSV = "data/political_tweets_final.csv"
 
 # ─────────────────────────────────────────────────────────────────────────────
