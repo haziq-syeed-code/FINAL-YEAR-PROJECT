@@ -4,8 +4,9 @@ Step 4: Lightweight Sarcasm Detection for Indian Political Tweets
 =============================================================================
 Project : Twitter Sentiment Analysis with Lightweight Sarcasm Detection
 Script  : scripts/sarcasm_detection.py
-Input   : data/political_tweets_sentiment.csv
-Output  : data/political_tweets_final.csv
+Input   : "data/political_tweets_sentiment.csv"
+Output  : "data/political_tweets_final.csv"
+
 =============================================================================
 
 APPROACH
@@ -90,30 +91,57 @@ def rule_punctuation(text: str) -> bool:
 
 # Words/phrases commonly used sarcastically in Indian political Twitter
 INDIAN_SARCASM_WORDS = [
-    # BJP/Modi criticism markers
-    "andhbhakt", "bhakt",        # blind follower — always derogatory
-    "jumla", "jumlebaazi",        # empty promise — always negative
-    "feku",                       # liar (Modi nickname) — always negative
-    "godi media",                 # lapdog media — always negative
-    "pappu",                      # Rahul Gandhi insult — always negative
-    "congress",                   # intentional misspelling used sarcastically
-    "sickulars",                  # sarcastic term for secularists
-    "libtard",                    # sarcastic liberal insult
-    "andh bhakt",                 # space variant
-    "namo app",                   # NaMo app tweets — often ironic praise
-    "vishwaguru",                 # Vishwaguru — often used sarcastically
-    "double engine",              # BJP slogan used sarcastically
-    "achhe din",                  # "good days" — BJP slogan, now ironic
-    "sabka saath",                # BJP slogan used ironically
-    "modiji",                     # used sarcastically in critical tweets
-    "modi ji",                    # same with space
-    "great leader",               # ironic praise in political context
-    "our great",                  # ironic opener
-    "master stroke",              # used sarcastically for BJP decisions
-    "masterstroke",               # variant
-    "clapping",                   # reference to applauding Modi
-    "thali bajao",                # COVID plate banging — used sarcastically
-    "diya jalao",                 # COVID candle — used sarcastically
+
+    # ── GENERIC POLITICAL SARCASM (no party) ─────────────────────────────
+    "great leader",
+    "our great",
+    "masterstroke",
+    "master stroke",
+    "vishwaguru",
+
+    # ── BJP / MODI CRITICISM ──────────────────────────────────────────────
+    "andhbhakt",
+    "jumla",
+    "jumlebaazi",
+    "feku",
+    "godi media",
+    "double engine",
+    "achhe din",
+    "sabka saath",
+    "modiji",
+    "modi ji",
+    "namo app",
+    "thali bajao",
+    "diya jalao",
+    "clapping",
+    "56 inch",
+    "vikas",
+
+    # ── CONGRESS / RAHUL GANDHI CRITICISM ────────────────────────────────
+    "pappu",
+    "shehzada",
+    "dynasty",
+    "tukde tukde",
+    "rahul baba",
+    "bharat jodo",
+    "naamdar",
+    "scam congress",
+    "congress mukt",
+
+    # ── AAP / KEJRIWAL CRITICISM ──────────────────────────────────────────
+    "mufflerman",
+    "aapda",
+    "sheeshmahal",
+    "kejru",
+    "free revdi",
+    "revdi culture",
+
+    # ── GENERAL POLITICAL SARCASM ─────────────────────────────────────────
+    "sickulars",
+    "libtard",
+    "presstitute",
+    "paid media",
+    "IT cell",
 ]
 
 def rule_indian_sarcasm_vocab(text: str) -> bool:
@@ -203,6 +231,31 @@ def rule_contradictory_structure(text: str) -> bool:
 
     return has_opener and has_contradiction
 
+# ─────────────────────────────────────────────────────────────────────────────
+# NEWS / NEUTRAL REPORTING DETECTOR
+# ─────────────────────────────────────────────────────────────────────────────
+
+NEWS_PHRASES = [
+    "expressed disappointment",
+    "promised that",
+    "paid back",
+    "not in the game",
+    "don't even vote",
+    "traditionally bjp bastions",
+    "if congress forms",
+    "if bjp forms",
+    "walks out",
+    "in protest against",
+    "don't understand the logic",
+]
+
+def is_news_reporting(text: str) -> bool:
+    """
+    Returns True if the tweet looks like neutral news reporting.
+    These tweets should not have sarcasm correction applied.
+    """
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in NEWS_PHRASES)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MASTER SARCASM DETECTOR
@@ -220,12 +273,12 @@ RULES = {
 def detect_sarcasm(text: str) -> tuple[bool, str]:
     """
     Runs all six rules against a tweet.
-
-    Returns:
-        (sarcasm_detected: bool, sarcasm_type: str)
-        sarcasm_type is "none" if no rule fired,
-        or comma-separated rule names if one or more fired.
+    Skips sarcasm detection entirely for news reporting tweets.
     """
+    # Skip sarcasm detection for neutral news reporting
+    if is_news_reporting(text):
+        return False, "none"
+
     triggered = []
     for rule_name, rule_fn in RULES.items():
         if rule_fn(str(text)):
@@ -240,26 +293,15 @@ def detect_sarcasm(text: str) -> tuple[bool, str]:
 # SENTIMENT CORRECTION LOGIC
 # ─────────────────────────────────────────────────────────────────────────────
 
-def correct_sentiment(original_sentiment: str, sarcasm_detected: bool) -> str:
-    """
-    Applies sarcasm correction to model's original sentiment prediction.
-
-    Rules:
-      - No sarcasm detected → keep original sentiment unchanged
-      - Sarcasm + Positive  → correct to Negative (ironic praise)
-      - Sarcasm + Neutral   → correct to Negative (disguised negativity)
-      - Sarcasm + Negative  → keep Negative (already correct)
-    """
+def correct_sentiment(original_sentiment: str, sarcasm_detected: bool,
+                      confidence: float = 1.0, threshold: float = 0.75) -> str:
     if not sarcasm_detected:
         return original_sentiment
-
-    if original_sentiment == "Positive":
-        return "Negative"   # Ironic praise flipped
-    elif original_sentiment == "Neutral":
-        return "Negative"   # Disguised negativity corrected
-    else:
-        return "Negative"   # Already negative, confirmed
-
+    if confidence >= threshold:
+        return original_sentiment
+    if original_sentiment in ("Positive", "Neutral"):
+        return "Negative"
+    return "Negative"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MAIN PIPELINE
@@ -284,7 +326,7 @@ def main():
 
     # ── Apply sentiment correction ────────────────────────────────────────────
     df["corrected_sentiment"] = df.apply(
-        lambda row: correct_sentiment(row["sentiment"], row["sarcasm_detected"]),
+         lambda row: correct_sentiment(row["sentiment"], row["sarcasm_detected"], row["sentiment_score"]),
         axis=1
     )
 
