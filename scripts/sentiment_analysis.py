@@ -1,6 +1,6 @@
 """
 =============================================================================
-Step 3: Sentiment Analysis using BERTweet
+Step 3: Sentiment Analysis using Cardiff RoBERTa (twitter-roberta-base-sentiment-latest)
 =============================================================================
 Project : Twitter Sentiment Analysis with Lightweight Sarcasm Detection
 Script  : scripts/sentiment_analysis.py
