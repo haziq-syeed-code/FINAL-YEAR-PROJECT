@@ -210,8 +210,16 @@ def save_pseudo_label(row_data):
 
 
 def save_state(state):
+    def convert(obj):
+        if hasattr(obj, 'item'):
+            return obj.item()
+        if isinstance(obj, dict):
+            return {k: convert(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [convert(i) for i in obj]
+        return obj
     with open(MODEL_STATE_JSON, "w") as f:
-        json.dump(state, f, indent=2)
+        json.dump(convert(state), f, indent=2)
 
 
 def load_state():
@@ -232,8 +240,17 @@ def clear():
 def mode_label(args):
     """Manual labelling interface — same as label_tweets.py but integrated."""
 
-    df = pd.read_csv(SENTIMENT_CSV, encoding="utf-8-sig").reset_index()
-    df = df.rename(columns={"index": "original_index"})
+    # Use uncertain tweets if they exist, otherwise use full dataset
+    uncertain_path = "data/uncertain_tweets.csv"
+    if os.path.exists(uncertain_path):
+        df = pd.read_csv(uncertain_path, encoding="utf-8-sig")
+        if "original_index" not in df.columns:
+            df = df.reset_index()
+            df = df.rename(columns={"index": "original_index"})
+        print(f"[Label] Loading {len(df)} uncertain tweets for active learning.")
+    else:
+        df = pd.read_csv(SENTIMENT_CSV, encoding="utf-8-sig").reset_index()
+        df = df.rename(columns={"index": "original_index"})
 
     end = args.end if args.end else len(df)
     df  = df.iloc[args.start:end].copy()
