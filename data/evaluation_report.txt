@@ -3,42 +3,42 @@ SENTIMENT MODEL EVALUATION REPORT
 Model        : cardiffnlp/twitter-roberta-base-sentiment-latest
 Dataset      : Indian Political Tweets (2026)
 Sample Size  : 129 manually annotated tweets
-Skipped      : 21 (US/foreign noise)
+Skipped      : 0 (US/foreign noise)
 
-Accuracy BEFORE sarcasm correction : 0.667 (66.7%)
-Accuracy AFTER  sarcasm correction : 0.752 (75.2%)
-Improvement                        : +8.5 percentage points
+Baseline (Cardiff RoBERTa)  : 0.674 (67.4%)
+Fine-tuned + Sarcasm Corr  : 0.783 (78.3%)
+Improvement                : +10.9 percentage points
 
-Per-Class Metrics BEFORE:
+Per-Class Metrics — Original Cardiff Baseline:
               precision    recall  f1-score   support
 
-    Positive      0.667     0.143     0.235        14
-     Neutral      0.508     0.750     0.606        40
-    Negative      0.806     0.720     0.761        75
+    Positive      0.667     0.182     0.286        11
+     Neutral      0.373     0.846     0.518        26
+    Negative      0.940     0.685     0.792        92
 
-    accuracy                          0.667       129
-   macro avg      0.660     0.538     0.534       129
-weighted avg      0.699     0.667     0.656       129
+    accuracy                          0.674       129
+   macro avg      0.660     0.571     0.532       129
+weighted avg      0.803     0.674     0.694       129
 
-Per-Class Metrics AFTER:
+Per-Class Metrics — Fine-tuned + Sarcasm Correction:
               precision    recall  f1-score   support
 
-    Positive      1.000     0.143     0.250        14
-     Neutral      0.622     0.700     0.659        40
-    Negative      0.817     0.893     0.854        75
+    Positive      0.636     0.636     0.636        11
+     Neutral      0.500     0.500     0.500        26
+    Negative      0.880     0.880     0.880        92
 
-    accuracy                          0.752       129
-   macro avg      0.813     0.579     0.587       129
-weighted avg      0.777     0.752     0.728       129
+    accuracy                          0.783       129
+   macro avg      0.672     0.672     0.672       129
+weighted avg      0.783     0.783     0.783       129
 
-Confusion Matrix BEFORE (rows=actual, cols=predicted):
+Confusion Matrix — Original Cardiff Baseline:
                Positive    Neutral   Negative
-Positive              2          9          3
-Neutral               0         30         10
-Negative              1         20         54
+Positive              2          9          0
+Neutral               0         22          4
+Negative              1         28         63
 
-Confusion Matrix AFTER (rows=actual, cols=predicted):
+Confusion Matrix — Fine-tuned + Sarcasm Correction:
                Positive    Neutral   Negative
-Positive              2          9          3
-Neutral               0         28         12
-Negative              0          8         67
+Positive              7          3          1
+Neutral               3         13         10
+Negative              1         10         81

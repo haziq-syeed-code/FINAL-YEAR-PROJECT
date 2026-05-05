@@ -24,161 +24,135 @@ from sklearn.metrics import (
 # ─────────────────────────────────────────────────────────────────────────────
 
 MANUAL_LABELS = {
-    # Tweets 1-50
-    1 : 'Neutral',   # Haryana Rajya Sabha — analytical
-    2 : 'Negative',  # Criticising Modi on history curriculum
-    3 : 'Neutral',   # Factual debunking of fake video
-    4 : 'Negative',  # Criticising BJP on census
-    5 : 'Negative',  # Sarcastic list mocking Modi's biography
-    6 : 'Neutral',   # Ambiguous Telugu — asking if BJP supported
-    7 : 'Negative',  # BJP ruling = worst roads, rapes, corruption
-    8 : 'Neutral',   # Congress promise — news report
-    9 : 'Negative',  # BJP won't give justice to general caste victim
-    10: 'Skip',      # US noise
-    11: 'Neutral',   # Poetic justice — ambiguous
-    12: 'Negative',  # TMC walks out — protest against EC/BJP
-    13: 'Negative',  # Mocking BJP supporters
-    14: 'Negative',  # AAP reduced to clowns
-    15: 'Negative',  # Modi cutout torn — blaming anti-BJP
-    16: 'Neutral',   # Factual — BJP cells in Mizoram
-    17: 'Negative',  # BJP keeps fooling people
-    18: 'Negative',  # BJP fixed election + Bengali race conspiracy
-    19: 'Neutral',   # Iran ship — ambiguous credit claim
-    20: 'Skip',      # US noise
-    21: 'Neutral',   # MIGA joke — ambiguous
-    22: 'Neutral',   # BJP not in TN game — humorous analytical
-    23: 'Negative',  # BJP destroying Kshatriya community
-    24: 'Negative',  # Criticising war allies killing innocents
-    25: 'Negative',  # Gas 45 days — BJP IT cell misleading
-    26: 'Neutral',   # BJP-PK-CBN political analysis
-    27: 'Negative',  # Modi obsessed with optics, Manmohan better
-    28: 'Skip',      # US noise
-    29: 'Neutral',   # North Indian voting pattern — analytical
-    30: 'Neutral',   # Ambiguous
-    31: 'Negative',  # Congress lying — sarcastic
-    32: 'Negative',  # Sarcastic — BJP provides luxury to be alive
-    33: 'Negative',  # Modi idiot on international relations
-    34: 'Negative',  # Times of India fake news criticism
-    35: 'Negative',  # BJP acting as both opposition and ruling party
-    36: 'Negative',  # Opposition Iran appeasement narrative
-    37: 'Negative',  # Things will go worse — pessimistic
-    38: 'Negative',  # Modi compromised — EVM manipulation
-    39: 'Negative',  # EVM manipulation to inflate BJP votes
-    40: 'Skip',      # US noise
-    41: 'Negative',  # Nehru giant, Modi what? — anti-Modi
-    42: 'Negative',  # SHAMEonBJP FM penalising taxpayers
-    43: 'Negative',  # BJP will lose WB, TN, Kerala
-    44: 'Neutral',   # Ambiguous
-    45: 'Negative',  # BJP worker misconduct
-    46: 'Positive',  # India leads BRICS — pro-Modi
-    47: 'Neutral',   # Sunil Grover never mimicked Modi — observational
-    48: 'Neutral',   # Sanatan trishul — religious, no party sentiment
-    49: 'Positive',  # Defending Modi — fake video propaganda
-    50: 'Skip',      # US noise
-
-    # Tweets 51-100
-    51: 'Neutral',   # Mixed — criticism but wants Modi to stay
-    52: 'Neutral',   # Prosenjit/BJP/TMC — humorous observation
-    53: 'Negative',  # Modi divider in chief
-    54: 'Skip',      # US noise
-    55: 'Negative',  # BJP RSS over active, home wars
-    56: 'Negative',  # Teacher suspended — dangerous signs
-    57: 'Neutral',   # Neither Modi nor Congress can solve — balanced
-    58: 'Negative',  # Sarcastic — Modi mother of democracy 🤡
-    59: 'Negative',  # Corruption rapes rampant, remove BJP
-    60: 'Negative',  # BJP game over, govt will fall
-    61: 'Negative',  # Mocking BJP andhbhakts
-    62: 'Neutral',   # Factual Ladakh/BJP Sixth Schedule analysis
-    63: 'Neutral',   # Breaking news — Haryana voting
-    64: 'Neutral',   # News headline — mimicry suspension
-    65: 'Neutral',   # BJP 272 seats — Telugu analysis
-    66: 'Negative',  # Anti-DMK, mixed negative
-    67: 'Positive',  # India car sales growth via NaMo App
-    68: 'Negative',  # Mocking BJP/RSS — cow piss
-    69: 'Neutral',   # Defending Modi on jet — analytical
-    70: 'Positive',  # Pro-Modi anti-Congress on terrorism
-    71: 'Skip',      # Uganda noise
-    72: 'Neutral',   # IAS spying — sarcastic ambiguous
-    73: 'Negative',  # Harsh attack on Modi — colonized mindset
-    74: 'Skip',      # Potato Congress noise
-    75: 'Negative',  # Congress cowardly lions
-    76: 'Negative',  # Pro-BJP aligns with Israel killing Palestinians
-    77: 'Neutral',   # Political analysis — no party won alliance
-    78: 'Negative',  # BJP Epstein Sanskaar — mocking
-    79: 'Neutral',   # This is india bro — ambiguous
-    80: 'Neutral',   # BJP can pull 2+ seats — analytical
-    81: 'Negative',  # BJP IT fake news makers
-    82: 'Skip',      # US noise
-    83: 'Positive',  # People of India voted BJP — defending
-    84: 'Negative',  # BJP RSS biggest chor
-    85: 'Neutral',   # Sarcastic list about Modi's knowledge
-    86: 'Positive',  # Defending BJP/Modi on oil stability
-    87: 'Skip',      # US noise
-    88: 'Negative',  # Coward Hindutva fascist BJP — aggressive
-    89: 'Skip',      # US noise
-    90: 'Negative',  # AIADMK shameless on CAA
-    91: 'Neutral',   # Sarcastic Modi/Pushpak Vimana — humorous
-    92: 'Neutral',   # Congress Vegetarian Anda — ambiguous
-    93: 'Negative',  # BJP workers targeting opposition
-    94: 'Positive',  # Defending BJP/Modi on oil — same as 86
-    95: 'Negative',  # Shameless fellows — hostile
-    96: 'Negative',  # Criticising communal rhetoric
-    97: 'Negative',  # BJP fixed election
-    98: 'Neutral',   # Vijay/Modi alliance analysis
-    99: 'Skip',      # US noise
-    100:'Skip',      # US noise
-
-    # Tweets 101-150
-    101:'Positive',  # My vote was for BJP not Congress
-    102:'Negative',  # EVM sarcastic criticism
-    103:'Negative',  # Upper caste show aukat of BJP — hostile
-    104:'Negative',  # Self called Gods chosen — mocking
-    105:'Neutral',   # Saw this driving — observational
-    106:'Negative',  # Living in fear under BJP regime
-    107:'Negative',  # Mocking Modi cultists
-    108:'Negative',  # BJP alcohol, rape crimes
-    109:'Positive',  # Bodoland peace — pro-Modi
-    110:'Negative',  # Mocking Congress and AAP
-    111:'Neutral',   # Price rollback 2015 — factual
-    112:'Neutral',   # Iran ships — ambiguous
-    113:'Skip',      # US noise
-    114:'Neutral',   # WB Hindus BJP voting — analytical
-    115:'Negative',  # Congress incompetent and corrupt
-    116:'Negative',  # Congress wouldn't win fair elections
-    117:'Negative',  # BJP IT cell boot lickers
-    118:'Negative',  # bjpigs — hostile
-    119:'Positive',  # TMC hooliganism ending — pro-Modi
-    120:'Negative',  # BJP-TN optics bad
-    121:'Positive',  # Strong pro-Modi anti-Congress foreign policy
-    122:'Skip',      # US noise
-    123:'Skip',      # US noise
-    124:'Negative',  # Failed Congress journalist
-    125:'Negative',  # Modi Yogi Shah go away
-    126:'Neutral',   # BJP war ambassador Zionists — observational
-    127:'Neutral',   # Lost ur mind TVK — ambiguous
-    128:'Negative',  # BJP extremist mobs threatening Muslims
-    129:'Negative',  # Anti-Congress on partition blame
-    130:'Skip',      # US noise
-    131:'Negative',  # Congress stooges false narratives
-    132:'Negative',  # Modi liar, optics over accountability
-    133:'Negative',  # Congress legalised infiltrators
-    134:'Positive',  # Pro-Modi, TMC jungle raj ending
-    135:'Negative',  # BJP jumlebaazi, Modi destroyed temples
-    136:'Positive',  # Pro-BJP save Bengali Hindus
-    137:'Neutral',   # Assam BJP alliance — factual
-    138:'Skip',      # US noise
-    139:'Skip',      # US noise
-    140:'Negative',  # Teacher suspended for mimicking Modi
-    141:'Negative',  # Modi Shah won't be around — hostile
-    142:'Negative',  # BJP fixed election
-    143:'Neutral',   # Kerala Congress seats — factual news
-    144:'Negative',  # BJP double engine = only corruption
-    145:'Positive',  # Pro-BJP Bengal election appeal
-    146:'Negative',  # Criticising Modi/Stalin/Vijayan ads
-    147:'Skip',      # US noise
-    148:'Skip',      # US noise
-    149:'Negative',  # Sarcastic — Modi govt is useless
-    150:'Neutral',   # Sarcastic Rahul Gandhi joke — ambiguous
+    1   : 'Negative',  # Keep an eye on the Haryana Rajya Sabha election. W ← CHANGED
+    2   : 'Negative',  # Why hasn\'t Modi 3.0 revised the history curriculum
+    3   : 'Neutral',   # Yes, this video is edited/manipulated. It\'s splice
+    4   : 'Negative',  # This numbers are crap.. If you want to play number
+    5   : 'Negative',  # Modi ji’s childhood now sounds less like a biograp
+    6   : 'Neutral',   # Pro bjp? Emaina statements ichinda I support bjp a
+    7   : 'Negative',  # Wherever the BJP is ruling the situation is the sa
+    8   : 'Neutral',   # Assam Pradesh Congress Committee president Gaurav 
+    9   : 'Negative',  # Bjp government will not provide justice, because v
+    11  : 'Neutral',   # It would be poetic justice if he would have voted 
+    12  : 'Neutral',   # Trinamool Congress walks out of Rajya Sabha for th ← CHANGED
+    13  : 'Negative',  # So he meant that if Indian bound ships passes thro
+    14  : 'Negative',  # AAP never fails to entertain They have reduced the
+    15  : 'Negative',  # MCC is in place and all posters are to be removed,
+    16  : 'Neutral',   # Do you know that BJP wants to setup or have alread
+    17  : 'Negative',  # Sach me yar sach me kya BJP ke pass ye mudde rahte
+    18  : 'Negative',  # 105-139-50 BJP-TMC-Others BJP already fixed Electi
+    19  : 'Neutral',   # The bottom line is Iran couldn\'t stop Indian Ship.
+    21  : 'Neutral',   # MIGA is already taken by Indian PM Modi during his
+    22  : 'Negative',  # Woahh chill bro .. BJP is not in the game itself i ← CHANGED
+    23  : 'Negative',  # Its for my Kshatriye community :- I didnt expected
+    24  : 'Negative',  # It\'s u & ur ilk who started this war. Remember tha
+    25  : 'Negative',  # For the notice of Andh Bhakts, Cheer leader of Mod
+    26  : 'Negative',  # Bjp has left PK only to keep check on CBN. Once CB ← CHANGED
+    27  : 'Negative',  # Narendra Modi remains obsessed with optics while b
+    29  : 'Negative',  # As a north Indian don\'t understand the logic of no ← CHANGED
+    30  : 'Neutral',   # That\'s the usual thing right and many of them don\'
+    31  : 'Negative',  # It\'s either way 😁 We citizens have learnt the less
+    32  : 'Negative',  # BjP so called Hindu party provides luxury to be al
+    33  : 'Negative',  # Each day this Modi guy pictures himself as more id
+    34  : 'Negative',  # Is running fake news on his front page - Times of 
+    35  : 'Negative',  # Opposition so weak that BJP decided to be work as 
+    36  : 'Negative',  # Where did he mention that this is not because of M
+    37  : 'Negative',  # He\'ll not do anything...rest assured. Everything w
+    38  : 'Negative',  # Sorry all fixed already that\'s one of the reasons 
+    39  : 'Negative',  # Biharis are not bengali voters. EVM will be manipu
+    41  : 'Negative',  # A nation once respected as the architect of the No
+    42  : 'Negative',  # SHAMEonBJP jee unable to Change FM who is in Missi
+    43  : 'Negative',  # BJP will lose in WB And will lose in TN Also in Ke
+    44  : 'Neutral',   # This will explain why he likes a specific communit
+    45  : 'Negative',  # And what was BJP worker searching in other lady\' b
+    46  : 'Neutral',   # As West Asia conflict deepens, India leads BRICS t ← CHANGED
+    47  : 'Negative',  # Ever wondered why Sunil Grover– who has mimicked e ← CHANGED
+    48  : 'Neutral',   # Their religion itself is 2000 years old and our Tr
+    49  : 'Negative',  # This manipulated fake video is disgusting — cut-pa ← CHANGED
+    51  : 'Negative',  # None of thise who criticize Modi ji now on policie ← CHANGED
+    52  : 'Neutral',   # Prosenjit Chatterjee\'s son Trishanjit ends his soc
+    53  : 'Negative',  # Modi is the divider in Chief. He does hindu vs Mus
+    55  : 'Negative',  # But BJP RSS and his pet\'s gang over active for,sta
+    56  : 'Negative',  # This teacher from Madhya Pradesh was suspended jus
+    57  : 'Negative',  # Don\'t think modiji or congress can solve this prob ← CHANGED
+    58  : 'Negative',  # Modi asked MP govt to suspended a School teacher j
+    59  : 'Negative',  # Under Modi rule, corruption, frauds and rapes are 
+    60  : 'Negative',  # If you had already done that you would have been a
+    61  : 'Negative',  # He didn\'t explain anything about how it is a propa
+    62  : 'Neutral',   # Some people interpreted this as a risky or sensiti
+    63  : 'Neutral',   # BREAKING: Voting has begun in the Haryana Assembly
+    64  : 'Negative',  # A Joke, a Viral Video, and a Midnight Suspension:  ← CHANGED
+    65  : 'Neutral',   # alliance em undi... Next election lo BJP 272 seats
+    66  : 'Negative',  # This lady generally picks up a dirty comment from 
+    67  : 'Neutral',   # India car sales to hit 4.7 million in FY26 despite ← CHANGED
+    68  : 'Negative',  # Guess you are in delulu 😂 don’t think all people a
+    69  : 'Neutral',   # Modi can do is to sanction the project that\'s all 
+    70  : 'Negative',  # NATION SHOULD NEVER FORGET PRO TERROR CONGRESS! -  ← CHANGED
+    72  : 'Negative',  # The IAS officers of the Government of India engage ← CHANGED
+    73  : 'Negative',  # Modi is the embodiment of the classic Indian colon
+    75  : 'Negative',  # Ugh! Another week. It seems that it is clickbait. 
+    76  : 'Negative',  # I mean she is pro bjp which aligns with israel tha
+    77  : 'Negative',  # It\'s not guts. He is left with no other option. He ← CHANGED
+    78  : 'Negative',  # Actually Having relationships with Eipstien is San
+    79  : 'Neutral',   # This is india bro and we have modi
+    80  : 'Positive',  # Should. I\'ll say this again, 1 is confirmed. But b ← CHANGED
+    81  : 'Negative',  # Fake False Paid News Makers of BJP IT
+    83  : 'Positive',  # People of India also voted BJP so shut up
+    84  : 'Negative',  # Petrol price is actually Rs 150 for unadulterated 
+    85  : 'Negative',  # Modi knows Tamil. And Sanskrit. And Robotics. And  ← CHANGED
+    86  : 'Positive',  # Mario let me be very clear to you bjp/modi kneels 
+    88  : 'Negative',  # Coward Hindutva Terrorist MOFO your fascist BJP Go
+    90  : 'Negative',  # AIADMK supported the passing of CAA bill without o
+    91  : 'Negative',  # We don’t need hanumanji. Modi and Puri can just se ← CHANGED
+    92  : 'Neutral',   # Congress & Vegetarian Anda party for you too.
+    93  : 'Negative',  # targeting opposition and especially BJP workers, a
+    94  : 'Positive',  # Mario let me be very clear to you bjp/modi kneels 
+    95  : 'Negative',  # These Rogues need a tip from America and they will
+    96  : 'Negative',  # Am I the only one who thinks that responsible and 
+    97  : 'Negative',  # 105-139-50 BJP-TMC-Others BJP already fixed Electi
+    98  : 'Neutral',   # Avlo scene lam illa vijay ku.If Modi wants vijay w
+    101 : 'Positive',  # My vote was for BJP not for Congress.
+    102 : 'Negative',  # Same evms work well when congress wins elections.
+    103 : 'Negative',  # Upper caste must show the aukat of BJP in upcoming
+    104 : 'Negative',  # So called moral army and Self called Gods choosen 
+    105 : 'Neutral',   # Saw this while driving to work today. And seriousl
+    106 : 'Negative',  # She is living in hiding in fear under BJP regime a
+    107 : 'Negative',  # If you oppose Modi ji then you are a Dehati is the
+    108 : 'Negative',  # BJP was distributing alcohol in Bengal... That\'s h
+    109 : 'Positive',  # Bodoland is scripting a new chapter of peace and p
+    110 : 'Negative',  # He he he... Same old story from CONgress and AAP. 
+    111 : 'Positive',  # the price in 2012, 2013 and 2014. It was rolled ba ← CHANGED
+    112 : 'Negative',  # They free our ships because of us those who suppor ← CHANGED
+    114 : 'Negative',  # More than 60 percent WB Hindus vote for BJP. So he ← CHANGED
+    115 : 'Negative',  # That fate is in the incompetent and corrupt hands 
+    116 : 'Negative',  # had there been fair elections congress and it alli
+    117 : 'Negative',  # They are BJP IT cells boot licker, don\'t take them
+    118 : 'Negative',  # Nothing can be done when bjpigs love that
+    119 : 'Positive',  # The days of TMC’s hooliganism are coming to an end
+    120 : 'Negative',  # He was seen as next MG Ramchandran. Colluding with
+    121 : 'Negative',  # Venisha ji, Congress ke \'strategic autonomy\' exper ← CHANGED
+    124 : 'Negative',  # Failed journalist of congress, daughter of Subrama
+    125 : 'Negative',  # You modi yogi and shah when they,ll go probably we
+    126 : 'Neutral',   # he said it not just standing next to an Indian bjp
+    127 : 'Negative',  # Lost ur mind ? U said source from a TVK ← CHANGED
+    128 : 'Negative',  # BJP RAJ Extremist mobs roaming Delhi, openly threa
+    129 : 'Negative',  # India was always a Sanatan Hindu Nation why else w
+    131 : 'Negative',  # They will oppose anyone who will support team Namo
+    132 : 'Negative',  # The Indian Union continues to fool people with vag
+    133 : 'Negative',  # Congress legalised & normalised illegal infiltrato
+    134 : 'Positive',  # Brigade4Poriborton The countdown has begun for tho
+    135 : 'Negative',  # Selling 35₹ fuel (actual cost of petrol) & 400₹ ga
+    136 : 'Positive',  # People of Bengal Choose Bjp...... To save the Beng
+    137 : 'Neutral',   # Assam bjp .. remaining all regional parties .
+    140 : 'Negative',  # A Brhamin teacher was suspended by the MP govt for
+    141 : 'Negative',  # fact that modi n shah won\'t be around in few years
+    142 : 'Negative',  # 105-139-50 BJP-TMC-Others BJP already fixed Electi
+    143 : 'Neutral',   # Kerala Congress (Joseph) seeks all 10 seats it con
+    144 : 'Negative',  # GA colony, Bharatpur electric sub station is a jok
+    145 : 'Positive',  # westindies BENGAL is going to the polling booth on
+    146 : 'Negative',  # May be you live in a different world where you are
+    149 : 'Negative',  # BREAKING : Exit Polls have started coming after LP
+    150 : 'Neutral',   # Even as \'Jag Ladki\' passes through Hormuz, Congres
 }
 
 
@@ -187,30 +161,61 @@ def main():
     print("  Step 3b: Sentiment Model Evaluation")
     print("=" * 65)
 
-    # Load FINAL csv — has both sentiment and corrected_sentiment columns
-    df = pd.read_csv("data/political_tweets_final.csv", encoding="utf-8-sig")
-    print(f"\n[Load]  {len(df)} tweets loaded from political_tweets_final.csv.")
+    # ── Load BOTH CSVs ────────────────────────────────────────────────────────
+    # BASELINE  = political_tweets_sentiment.csv
+    #             Original Cardiff RoBERTa predictions — never overwritten
+    #             This is the true "before" baseline (66.7%)
+    #
+    # FINAL     = political_tweets_final.csv
+    #             Fine-tuned model predictions + sarcasm correction
+    #             This is the "after" result
+    #
+    # We compare baseline sentiment vs fine-tuned corrected_sentiment
+    # on the same 129 manually labelled tweets using the same random seed.
 
-    # Recreate exact same 150-tweet sample used for manual labelling
-    sample = df.sample(150, random_state=42).reset_index(drop=True)
-    sample.index += 1  # 1-based to match manual label keys
+    df_baseline = pd.read_csv(
+        "data/political_tweets_sentiment.csv", encoding="utf-8-sig"
+    )
+    df_final = pd.read_csv(
+        "data/political_tweets_final.csv", encoding="utf-8-sig"
+    )
+    print(f"\n[Load]  Baseline CSV : {len(df_baseline)} tweets "
+          f"(original Cardiff RoBERTa)")
+    print(f"[Load]  Final CSV    : {len(df_final)} tweets "
+          f"(fine-tuned model + sarcasm correction)")
 
-    # Align manual labels with BOTH model and corrected predictions
+    # Recreate exact same 150-tweet sample from FINAL CSV
+    # (same random seed = same tweets every run)
+    sample_final    = df_final.sample(150, random_state=42).reset_index(drop=True)
+    sample_final.index += 1
+
+    # Same sample from BASELINE CSV for fair comparison
+    sample_baseline = df_baseline.sample(150, random_state=42).reset_index(drop=True)
+    sample_baseline.index += 1
+
+    # Align manual labels with predictions from both models
     records = []
     skipped = 0
     for idx, manual_label in MANUAL_LABELS.items():
         if manual_label == 'Skip':
             skipped += 1
             continue
-        if idx in sample.index:
+        if idx in sample_final.index:
+            # Baseline: original Cardiff prediction (before any fine-tuning)
+            baseline_pred = sample_baseline.loc[idx, "sentiment"] \
+                if idx in sample_baseline.index else "Neutral"
+
+            # After: fine-tuned model's corrected prediction
+            corrected_pred = sample_final.loc[idx, "corrected_sentiment"]
+
             records.append({
-                "tweet_num"          : idx,
-                "manual"             : manual_label,
-                "model_raw"          : sample.loc[idx, "sentiment"],
-                "model_corrected"    : sample.loc[idx, "corrected_sentiment"],
-                "sarcasm_detected"   : sample.loc[idx, "sarcasm_detected"],
-                "sarcasm_type"       : sample.loc[idx, "sarcasm_type"],
-                "text"               : sample.loc[idx, "clean_text"][:80],
+                "tweet_num"        : idx,
+                "manual"           : manual_label,
+                "model_raw"        : baseline_pred,
+                "model_corrected"  : corrected_pred,
+                "sarcasm_detected" : sample_final.loc[idx, "sarcasm_detected"],
+                "sarcasm_type"     : sample_final.loc[idx, "sarcasm_type"],
+                "text"             : sample_final.loc[idx, "clean_text"][:80],
             })
 
     eval_df = pd.DataFrame(records)
@@ -219,8 +224,8 @@ def main():
     print(f"[Eval]  {eval_df['sarcasm_detected'].sum()} tweets flagged as sarcastic in this sample.\n")
 
     y_true         = eval_df["manual"].tolist()
-    y_pred_before  = eval_df["model_raw"].tolist()
-    y_pred_after   = eval_df["model_corrected"].tolist()
+    y_pred_before  = eval_df["model_raw"].tolist()      # original Cardiff baseline
+    y_pred_after   = eval_df["model_corrected"].tolist() # fine-tuned + corrected
 
     # Metrics — BEFORE
     acc_before    = accuracy_score(y_true, y_pred_before)
@@ -261,21 +266,21 @@ def main():
     print(f"    - Neutral   : {y_true.count('Neutral')}")
     print(f"    - Negative  : {y_true.count('Negative')}")
     print(f"\n  ── Accuracy Comparison ──────────────────────────────")
-    print(f"  Before sarcasm correction : {acc_before:.3f} ({acc_before*100:.1f}%)")
-    print(f"  After  sarcasm correction : {acc_after:.3f}  ({acc_after*100:.1f}%)")
-    print(f"  Improvement               : {improvement:+.1f} percentage points")
+    print(f"  Original Cardiff RoBERTa (baseline) : {acc_before:.3f} ({acc_before*100:.1f}%)")
+    print(f"  Fine-tuned model + sarcasm correction: {acc_after:.3f}  ({acc_after*100:.1f}%)")
+    print(f"  Improvement                          : {improvement:+.1f} percentage points")
 
-    print(f"\n  ── Per-Class Metrics BEFORE ─────────────────────────")
+    print(f"\n  ── Per-Class Metrics — Original Cardiff (Baseline) ──────────")
     print(report_before)
-    print(f"  ── Per-Class Metrics AFTER ──────────────────────────")
+    print(f"  ── Per-Class Metrics — Fine-tuned + Sarcasm Correction ──────")
     print(report_after)
 
-    print("  ── Confusion Matrix BEFORE (rows=actual, cols=predicted) ──")
+    print("  ── Confusion Matrix — Original Cardiff Baseline ───────────")
     print(f"  {'':12} {'Positive':>10} {'Neutral':>10} {'Negative':>10}")
     for i, label in enumerate(["Positive", "Neutral", "Negative"]):
         print(f"  {label:12} {cm_before[i][0]:>10} {cm_before[i][1]:>10} {cm_before[i][2]:>10}")
 
-    print(f"\n  ── Confusion Matrix AFTER (rows=actual, cols=predicted) ───")
+    print(f"\n  ── Confusion Matrix — Fine-tuned + Sarcasm Correction ─────")
     print(f"  {'':12} {'Positive':>10} {'Neutral':>10} {'Negative':>10}")
     for i, label in enumerate(["Positive", "Neutral", "Negative"]):
         print(f"  {label:12} {cm_after[i][0]:>10} {cm_after[i][1]:>10} {cm_after[i][2]:>10}")
@@ -299,18 +304,18 @@ def main():
         f.write(f"Dataset      : Indian Political Tweets (2026)\n")
         f.write(f"Sample Size  : {len(eval_df)} manually annotated tweets\n")
         f.write(f"Skipped      : {skipped} (US/foreign noise)\n\n")
-        f.write(f"Accuracy BEFORE sarcasm correction : {acc_before:.3f} ({acc_before*100:.1f}%)\n")
-        f.write(f"Accuracy AFTER  sarcasm correction : {acc_after:.3f} ({acc_after*100:.1f}%)\n")
-        f.write(f"Improvement                        : {improvement:+.1f} percentage points\n\n")
-        f.write("Per-Class Metrics BEFORE:\n")
+        f.write(f"Baseline (Cardiff RoBERTa)  : {acc_before:.3f} ({acc_before*100:.1f}%)\n")
+        f.write(f"Fine-tuned + Sarcasm Corr  : {acc_after:.3f} ({acc_after*100:.1f}%)\n")
+        f.write(f"Improvement                : {improvement:+.1f} percentage points\n\n")
+        f.write("Per-Class Metrics — Original Cardiff Baseline:\n")
         f.write(report_before)
-        f.write("\nPer-Class Metrics AFTER:\n")
+        f.write("\nPer-Class Metrics — Fine-tuned + Sarcasm Correction:\n")
         f.write(report_after)
-        f.write("\nConfusion Matrix BEFORE (rows=actual, cols=predicted):\n")
+        f.write("\nConfusion Matrix — Original Cardiff Baseline:\n")
         f.write(f"{'':12} {'Positive':>10} {'Neutral':>10} {'Negative':>10}\n")
         for i, label in enumerate(["Positive", "Neutral", "Negative"]):
             f.write(f"{label:12} {cm_before[i][0]:>10} {cm_before[i][1]:>10} {cm_before[i][2]:>10}\n")
-        f.write("\nConfusion Matrix AFTER (rows=actual, cols=predicted):\n")
+        f.write("\nConfusion Matrix — Fine-tuned + Sarcasm Correction:\n")
         f.write(f"{'':12} {'Positive':>10} {'Neutral':>10} {'Negative':>10}\n")
         for i, label in enumerate(["Positive", "Neutral", "Negative"]):
             f.write(f"{label:12} {cm_after[i][0]:>10} {cm_after[i][1]:>10} {cm_after[i][2]:>10}\n")
