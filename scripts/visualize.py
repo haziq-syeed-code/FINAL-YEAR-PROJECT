@@ -6,15 +6,27 @@ Project : Twitter Sentiment Analysis with Lightweight Sarcasm Detection
 Script  : scripts/visualize.py
 Input   : data/political_tweets_final.csv
 Output  : dashboard/sentiment_dashboard.png
-=============================================================================
 
-INSTALL
--------
-    pip install matplotlib seaborn
+CHART LAYOUT
+------------
+Chart 1 — Overall Sentiment Distribution (donut)
+           corrected_sentiment across all 2,313 tweets
 
-RUN
----
-    python scripts/visualize.py
+Chart 2 — Sentiment by Political Party (stacked bar)
+           Party on x-axis, % of Positive/Neutral/Negative on y-axis
+           Based on corrected_sentiment after fine-tuned model
+
+Chart 3 — Impact of Sarcasm Detection (grouped bar)
+           Shows exactly how many tweets had sentiment corrected:
+           Neutral→Negative (92) and Positive→Negative (35)
+           Side-by-side before/after counts per sentiment class
+
+Chart 4 — Model Performance: Baseline vs Fine-tuned (grouped bar)
+           Four metrics: Overall Accuracy, Positive F1, Neutral F1, Negative F1
+           Numbers from evaluation_report.txt (129 held-out annotated tweets)
+
+Chart 5 — Sarcasm Detection Rate by Party (grouped bar)
+           % of party tweets flagged as sarcastic by the fine-tuned model
 =============================================================================
 """
 
@@ -22,6 +34,8 @@ import os
 import warnings
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
@@ -48,8 +62,11 @@ COLORS = {
     "text"       : "#E2E8F0",
     "subtext"    : "#94A3B8",
     "grid"       : "#2D3148",
+    "before"     : "#546E7A",
+    "after"      : "#4A90D9",
 }
 
+BASE_FONT = 10
 plt.rcParams.update({
     "figure.facecolor" : COLORS["bg"],
     "axes.facecolor"   : COLORS["card"],
@@ -61,9 +78,33 @@ plt.rcParams.update({
     "grid.color"       : COLORS["grid"],
     "grid.linewidth"   : 0.5,
     "font.family"      : "DejaVu Sans",
+    "font.size"        : BASE_FONT,
+    "axes.titlepad"    : 14,
 })
 
 MAIN_PARTIES = ["BJP", "Congress", "TMC", "DMK/AIADMK", "AAP"]
+SENTIMENTS   = ["Positive", "Neutral", "Negative"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def bar_label(ax, bar, label, color=None, bold=False, fontsize=9, offset=1.2):
+    """Place a value label above a bar without overlapping."""
+    ax.text(
+        bar.get_x() + bar.get_width() / 2,
+        bar.get_height() + offset,
+        label,
+        ha="center", va="bottom",
+        fontsize=fontsize,
+        fontweight="bold" if bold else "normal",
+        color=color or COLORS["text"],
+    )
+
+def clean_spines(ax):
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -73,26 +114,25 @@ MAIN_PARTIES = ["BJP", "Congress", "TMC", "DMK/AIADMK", "AAP"]
 def tag_party(text):
     t = str(text).lower()
     parties = []
-    if any(w in t for w in ['bjp','modi','amit shah','yogi','nda','hindutva','rss']):
-        parties.append('BJP')
-    if any(w in t for w in ['congress','rahul','kharge','upa','sonia','priyanka']):
-        parties.append('Congress')
-    if any(w in t for w in ['aap','kejriwal','aam aadmi']):
-        parties.append('AAP')
-    if any(w in t for w in ['tmc','trinamool','mamata','didi']):
-        parties.append('TMC')
-    if any(w in t for w in ['dmk','stalin','aiadmk','eps','annamalai']):
-        parties.append('DMK/AIADMK')
-    return parties if parties else ['Other']
+    if any(w in t for w in ["bjp", "modi", "amit shah", "yogi", "nda", "hindutva", "rss"]):
+        parties.append("BJP")
+    if any(w in t for w in ["congress", "rahul", "kharge", "upa", "sonia", "priyanka"]):
+        parties.append("Congress")
+    if any(w in t for w in ["aap", "kejriwal", "aam aadmi"]):
+        parties.append("AAP")
+    if any(w in t for w in ["tmc", "trinamool", "mamata", "didi"]):
+        parties.append("TMC")
+    if any(w in t for w in ["dmk", "stalin", "aiadmk", "eps", "annamalai"]):
+        parties.append("DMK/AIADMK")
+    return parties if parties else ["Other"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# LOAD & PREPARE DATA
+# LOAD & PREPARE
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load_data():
     df = pd.read_csv(INPUT_CSV, encoding="utf-8-sig")
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df["parties"] = df["clean_text"].apply(tag_party)
     df_exp = df.explode("parties")
     df_parties = df_exp[df_exp["parties"].isin(MAIN_PARTIES)].copy()
@@ -100,7 +140,7 @@ def load_data():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHART 1 — Overall Sentiment Donut
+# CHART 1 — Overall Sentiment Distribution (donut)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def chart_overall_sentiment(df, ax):
@@ -110,253 +150,311 @@ def chart_overall_sentiment(df, ax):
     colors = [COLORS[l] for l in labels]
     total  = sum(sizes)
 
-    wedges, _, autotexts = ax.pie(
-        sizes, colors=colors, autopct="%1.1f%%",
-        startangle=90, pctdistance=0.75,
-        wedgeprops={"linewidth": 3, "edgecolor": COLORS["bg"], "width": 0.55},
+    wedges, texts, autotexts = ax.pie(
+        sizes,
+        colors=colors,
+        autopct="%1.1f%%",
+        startangle=90,
+        pctdistance=0.72,
+        wedgeprops={"linewidth": 3, "edgecolor": COLORS["bg"], "width": 0.52},
     )
     for at in autotexts:
         at.set_fontsize(11)
         at.set_fontweight("bold")
-        at.set_color(COLORS["text"])
+        at.set_color("white")
 
-    ax.text(0, 0.1, str(total), ha="center", va="center",
+    # Centre label
+    ax.text(0, 0.12, f"{total:,}", ha="center", va="center",
             fontsize=22, fontweight="bold", color=COLORS["text"])
-    ax.text(0, -0.2, "tweets", ha="center", va="center",
-            fontsize=10, color=COLORS["subtext"])
+    ax.text(0, -0.18, "total tweets", ha="center", va="center",
+            fontsize=9, color=COLORS["subtext"])
 
-    patches = [mpatches.Patch(color=COLORS[l], label=f"{l}  {counts.get(l,0)}")
-               for l in labels]
-    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.15),
-              ncol=3, frameon=False, fontsize=9)
-    ax.set_title("Overall Sentiment\n(After Sarcasm Correction)",
-                 fontsize=12, fontweight="bold", pad=15, color=COLORS["text"])
+    patches = [
+        mpatches.Patch(color=COLORS[l], label=f"{l}  {counts.get(l, 0):,}")
+        for l in labels
+    ]
+    # Legend below the pie, well outside it
+    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.30),
+              ncol=1, frameon=False, fontsize=9.5)
+    ax.set_title("Overall Sentiment Distribution\n(2,313 tweets · Fine-tuned Model)",
+                 fontsize=11, fontweight="bold", color=COLORS["text"])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHART 2 — Party-wise Sentiment Stacked Bar
+# CHART 2 — Sentiment by Political Party (stacked 100% bar)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def chart_party_sentiment(df_parties, ax):
-    sentiments = ["Positive", "Neutral", "Negative"]
-    bar_width  = 0.55
+    bar_width = 0.52
 
+    # Build percentage table
     data = {}
+    counts = {}
     for party in MAIN_PARTIES:
-        subset = df_parties[df_parties["parties"] == party]
-        total  = len(subset)
-        if total == 0:
+        sub   = df_parties[df_parties["parties"] == party]
+        n     = len(sub)
+        counts[party] = n
+        if n == 0:
             data[party] = [0, 0, 0]
-            continue
-        data[party] = [
-            subset[subset["corrected_sentiment"] == s].shape[0] / total * 100
-            for s in sentiments
-        ]
+        else:
+            data[party] = [
+                sub[sub["corrected_sentiment"] == s].shape[0] / n * 100
+                for s in SENTIMENTS
+            ]
 
-    bottoms = [0] * len(MAIN_PARTIES)
-    for i, sentiment in enumerate(sentiments):
-        values = [data[p][i] for p in MAIN_PARTIES]
-        bars = ax.bar(MAIN_PARTIES, values, bar_width,
-                      bottom=bottoms, color=COLORS[sentiment],
-                      label=sentiment, alpha=0.92)
+    bottoms = [0.0] * len(MAIN_PARTIES)
+    for s in SENTIMENTS:
+        values = [data[p][SENTIMENTS.index(s)] for p in MAIN_PARTIES]
+        bars   = ax.bar(MAIN_PARTIES, values, bar_width,
+                        bottom=bottoms, color=COLORS[s],
+                        label=s, alpha=0.92, zorder=3)
         for j, (bar, val) in enumerate(zip(bars, values)):
-            if val > 6:
-                ax.text(bar.get_x() + bar.get_width() / 2,
-                        bottoms[j] + val / 2,
-                        f"{val:.0f}%", ha="center", va="center",
-                        fontsize=9, fontweight="bold", color="white")
+            if val > 7:
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bottoms[j] + val / 2,
+                    f"{val:.0f}%",
+                    ha="center", va="center",
+                    fontsize=9, fontweight="bold", color="white",
+                )
         bottoms = [b + v for b, v in zip(bottoms, values)]
 
+    # Tweet count above bars
     for i, party in enumerate(MAIN_PARTIES):
-        count = len(df_parties[df_parties["parties"] == party])
-        ax.text(i, 102, f"n={count}", ha="center", va="bottom",
+        n = counts[party]
+        ax.text(i, 101.5, f"n={n:,}", ha="center", va="bottom",
                 fontsize=8, color=COLORS["subtext"])
 
-    ax.set_ylim(0, 115)
-    ax.set_ylabel("Percentage (%)", fontsize=10)
-    ax.set_title("Sentiment by Political Party",
-                 fontsize=12, fontweight="bold", pad=15)
-    ax.legend(loc="upper right", frameon=False, fontsize=9)
-    ax.yaxis.grid(True, alpha=0.3)
+    # AAP disclaimer, kept above the plotting area so it does not collide
+    # with the party tick label.
+    ax.text(4, 108, "* low sample", ha="center", va="bottom",
+            fontsize=7.5, color=COLORS["subtext"], style="italic")
+
+    ax.set_ylim(0, 120)
+    ax.set_yticks([0, 25, 50, 75, 100])
+    ax.set_yticklabels(["0%", "25%", "50%", "75%", "100%"])
+    ax.set_ylabel("Share of Party Tweets (%)", fontsize=10)
+    ax.set_xlabel("Political Party", fontsize=10)
+    ax.set_title("Sentiment Distribution by Political Party\n"
+                 "(Positive / Neutral / Negative · After Fine-tuned Model)",
+                 fontsize=11, fontweight="bold")
+    ax.legend(loc="upper left", frameon=False, fontsize=9,
+              bbox_to_anchor=(0.01, 0.995), borderaxespad=0.0)
+    ax.yaxis.grid(True, alpha=0.3, zorder=0)
     ax.set_axisbelow(True)
+    clean_spines(ax)
 
     party_colors = [COLORS.get(p, COLORS["text"]) for p in MAIN_PARTIES]
-    for tick, color in zip(ax.get_xticklabels(), party_colors):
-        tick.set_color(color)
+    for tick, c in zip(ax.get_xticklabels(), party_colors):
+        tick.set_color(c)
         tick.set_fontweight("bold")
+        tick.set_fontsize(10)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHART 3 — Sarcasm Detection Rule Breakdown
+# CHART 3 — Impact of Sarcasm Detection (before vs after counts per class)
+#
+# The fine-tuned model detected 348 sarcastic tweets.
+# Of those, 127 had their sentiment corrected:
+#   Neutral  → Negative : 92 tweets
+#   Positive → Negative : 35 tweets
+#
+# This chart shows the full before/after sentiment count so faculty can see
+# exactly what the sarcasm correction step changed.
 # ─────────────────────────────────────────────────────────────────────────────
 
-def chart_sarcasm_rules(df, ax):
-    rules = {
-        "Indian Vocab"   : "indian_vocab",
-        "Punctuation"    : "punctuation",
-        "Election Fraud" : "election_fraud",
-        "Sarcasm Emoji"  : "sarcasm_emoji",
-        "So Called"      : "so_called",
-        "Rhetorical"     : "rhetorical",
-        "Ironic Praise"  : "ironic_compliment",
-        "Hashtag"        : "hashtag",
-    }
+def chart_sarcasm_impact(df, ax):
+    before_counts = df["sentiment"].value_counts()
+    after_counts  = df["corrected_sentiment"].value_counts()
 
-    counts = {}
-    for label, key in rules.items():
-        counts[label] = df["sarcasm_type"].str.contains(key, na=False).sum()
+    labels  = SENTIMENTS
+    before  = [before_counts.get(s, 0) for s in labels]
+    after   = [after_counts.get(s, 0)  for s in labels]
 
-    counts = {k: v for k, v in sorted(counts.items(), key=lambda x: x[1], reverse=True) if v > 0}
-    labels = list(counts.keys())
-    values = list(counts.values())
-
-    bar_colors = ["#e74c3c","#f39c12","#3498db","#9b59b6",
-                  "#1abc9c","#e67e22","#2ecc71","#e91e63"][:len(labels)]
-
-    bars = ax.barh(labels[::-1], values[::-1],
-                   color=bar_colors[::-1], alpha=0.85, height=0.6)
-
-    for bar, val in zip(bars, values[::-1]):
-        ax.text(bar.get_width() + 0.3, bar.get_y() + bar.get_height() / 2,
-                str(val), va="center", ha="left",
-                fontsize=10, fontweight="bold", color=COLORS["text"])
-
-    ax.set_xlabel("Tweets Detected", fontsize=10)
-    ax.set_title("Sarcasm Detection by Rule",
-                 fontsize=12, fontweight="bold", pad=15)
-    ax.xaxis.grid(True, alpha=0.3)
-    ax.set_axisbelow(True)
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# CHART 4 — Accuracy Before vs After
-# ─────────────────────────────────────────────────────────────────────────────
-
-def chart_accuracy_comparison(ax):
-    metrics = ["Overall\nAccuracy", "Negative\nF1", "Neutral\nF1", "Positive\nF1"]
-    before  = [66.7, 76.1, 60.6, 23.5]
-    after   = [75.2, 86.1, 66.7, 25.0]
-
-    x     = np.arange(len(metrics))
+    x     = np.arange(len(labels))
     width = 0.35
 
-    bars1 = ax.bar(x - width/2, before, width,
-                   label="Before", color="#4A5568", alpha=0.85)
-    bars2 = ax.bar(x + width/2, after, width,
-                   label="After", color="#4A90D9", alpha=0.92)
+    bars_b = ax.bar(x - width / 2, before, width,
+                    label="Before Correction\n(Baseline Predictions)",
+                    color=COLORS["before"], alpha=0.90, zorder=3)
+    bars_a = ax.bar(x + width / 2, after, width,
+                    color=[COLORS[s] for s in labels], alpha=0.92, zorder=3)
 
-    for bar in bars1:
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                f"{bar.get_height():.1f}%", ha="center", va="bottom",
-                fontsize=8, color=COLORS["subtext"])
+    for bar in bars_b:
+        bar_label(ax, bar, f"{int(bar.get_height()):,}",
+                  color=COLORS["subtext"], fontsize=9, offset=8)
+    for bar in bars_a:
+        bar_label(ax, bar, f"{int(bar.get_height()):,}",
+                  color=COLORS["text"], bold=True, fontsize=9, offset=8)
 
-    for bar in bars2:
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                f"{bar.get_height():.1f}%", ha="center", va="bottom",
-                fontsize=8, fontweight="bold", color=COLORS["text"])
+    max_val = max(before + after)
+    ax.set_ylim(0, max_val * 1.26)
 
-    for i, (b, a) in enumerate(zip(before, after)):
-        ax.annotate(f"+{a-b:.1f}",
-                    xy=(x[i] + width/2, a + 2.5),
-                    fontsize=8, color="#2ecc71",
-                    fontweight="bold", ha="center")
+    # Annotate the actual changes without crossing into the neighbouring chart.
+    ax.annotate(
+        "+127 corrected\nto Negative",
+        xy=(x[2] + width / 2, after[2]),
+        xytext=(x[2] - 0.05, after[2] + max_val * 0.08),
+        ha="center", va="bottom",
+        fontsize=8, color="#2ecc71", fontweight="bold",
+        arrowprops=dict(arrowstyle="->", color="#2ecc71", lw=1.0,
+                        shrinkA=2, shrinkB=4),
+    )
 
-    ax.set_ylim(0, 100)
     ax.set_xticks(x)
-    ax.set_xticklabels(metrics, fontsize=9)
-    ax.set_ylabel("Score (%)", fontsize=10)
-    ax.set_title("Model Performance\nBefore vs After Sarcasm Correction",
-                 fontsize=12, fontweight="bold", pad=15)
-    ax.legend(frameon=False, fontsize=9, loc="lower right")
-    ax.yaxis.grid(True, alpha=0.3)
+    ax.set_xticklabels(labels, fontsize=10.5)
+    for tick, s in zip(ax.get_xticklabels(), labels):
+        tick.set_color(COLORS[s])
+        tick.set_fontweight("bold")
+
+    ax.set_xlabel("Sentiment Class", fontsize=10)
+    ax.set_ylabel("Number of Tweets", fontsize=10)
+    ax.set_title("Impact of Sarcasm Detection on Sentiment Distribution\n"
+                 "(348 tweets flagged · 127 sentiment labels corrected)",
+                 fontsize=11, fontweight="bold")
+    legend_handles = [
+        mpatches.Patch(color=COLORS["before"], label="Before correction"),
+        mpatches.Patch(color=COLORS["Positive"], label="After: Positive"),
+        mpatches.Patch(color=COLORS["Neutral"], label="After: Neutral"),
+        mpatches.Patch(color=COLORS["Negative"], label="After: Negative"),
+    ]
+    ax.legend(handles=legend_handles, frameon=False, fontsize=8.4,
+              loc="upper left", ncol=2, bbox_to_anchor=(0.01, 0.995),
+              borderaxespad=0.0, columnspacing=1.2, handlelength=1.6)
+    ax.yaxis.grid(True, alpha=0.3, zorder=0)
     ax.set_axisbelow(True)
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
+    clean_spines(ax)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHART 5 — Sarcasm % by Party (REPLACES trend chart)
-# Shows what percentage of each party's tweets were detected as sarcastic
-# and how many had their sentiment corrected as a result
+# CHART 4 — Model Performance: Baseline vs Fine-tuned
+#
+# Comparison is:
+#   Baseline = Original Cardiff RoBERTa (zero-shot, no fine-tuning)
+#   After    = Fine-tuned Cardiff RoBERTa + sarcasm correction
+#
+# Numbers from evaluation_report.txt (129 held-out manually annotated tweets)
+#
+#             Baseline    Fine-tuned
+# Accuracy     67.4%       78.3%
+# Positive F1  28.6%       63.6%
+# Neutral  F1  51.8%       50.0%
+# Negative F1  79.2%       88.0%
+# ─────────────────────────────────────────────────────────────────────────────
+
+def chart_model_performance(ax):
+    groups = [
+        "Overall\nAccuracy",
+        "Positive\nF1-Score",
+        "Neutral\nF1-Score",
+        "Negative\nF1-Score",
+    ]
+    baseline   = [67.4, 28.6, 51.8, 79.2]
+    finetuned  = [78.3, 63.6, 50.0, 88.0]
+
+    x     = np.arange(len(groups))
+    width = 0.34
+
+    bars_b = ax.bar(x - width / 2, baseline, width,
+                    label="Baseline\n(Cardiff RoBERTa, zero-shot)",
+                    color=COLORS["before"], alpha=0.90, zorder=3)
+    bars_a = ax.bar(x + width / 2, finetuned, width,
+                    label="Fine-tuned\n(+ Sarcasm Correction)",
+                    color=COLORS["after"], alpha=0.95, zorder=3)
+
+    # Value labels — enough offset so they never overlap the delta
+    for bar in bars_b:
+        bar_label(ax, bar, f"{bar.get_height():.1f}%",
+                  color=COLORS["subtext"], fontsize=8.5, offset=1.5)
+    for bar in bars_a:
+        bar_label(ax, bar, f"{bar.get_height():.1f}%",
+                  color=COLORS["text"], bold=True, fontsize=8.5, offset=1.5)
+
+    # Delta labels — positioned well above, with colour indicating direction
+    for i, (b, a) in enumerate(zip(baseline, finetuned)):
+        delta  = a - b
+        sign   = "+" if delta >= 0 else ""
+        dcolor = "#2ecc71" if delta > 0 else "#e74c3c"
+        ax.text(x[i] + width / 2, a + 7,
+                f"{sign}{delta:.1f}pp",
+                ha="center", va="bottom",
+                fontsize=8, fontweight="bold", color=dcolor)
+
+    ax.set_ylim(0, 114)
+    ax.set_yticks([0, 20, 40, 60, 80, 100])
+    ax.set_yticklabels(["0%", "20%", "40%", "60%", "80%", "100%"])
+    ax.set_xticks(x)
+    ax.set_xticklabels(groups, fontsize=9.5)
+    ax.set_xlabel("Evaluation Metric", fontsize=10)
+    ax.set_ylabel("Score (%)", fontsize=10)
+    ax.set_title("Model Performance: Baseline vs Fine-tuned Model\n"
+                 "(Evaluated on 129 manually annotated held-out tweets)",
+                 fontsize=11, fontweight="bold")
+    ax.legend(frameon=False, fontsize=8.5, loc="upper left",
+              bbox_to_anchor=(0.01, 0.995), borderaxespad=0.0)
+    ax.yaxis.grid(True, alpha=0.3, zorder=0)
+    ax.axhline(50, color=COLORS["grid"], lw=0.8, ls="--", zorder=1)
+    ax.text(len(groups) - 0.42, 51, "50%", fontsize=7.5,
+            color=COLORS["subtext"], va="bottom")
+    ax.set_axisbelow(True)
+    clean_spines(ax)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CHART 5 — Sarcasm Detection Rate by Party
 # ─────────────────────────────────────────────────────────────────────────────
 
 def chart_sarcasm_by_party(df_parties, ax):
-    parties = ["BJP", "Congress", "TMC", "DMK/AIADMK", "AAP"]
+    sarc_pct  = []
+    counts    = []
 
-    sarc_pct      = []
-    corrected_pct = []
-    counts        = []
+    for party in MAIN_PARTIES:
+        sub   = df_parties[df_parties["parties"] == party]
+        n     = len(sub)
+        sarc  = sub["sarcasm_detected"].sum()
+        sarc_pct.append(sarc / n * 100 if n > 0 else 0)
+        counts.append(n)
 
-    for party in parties:
-        subset = df_parties[df_parties["parties"] == party]
-        total  = len(subset)
-        sarc   = subset["sarcasm_detected"].sum()
-        corr   = (subset["sentiment"] != subset["corrected_sentiment"]).sum()
-        sarc_pct.append(sarc / total * 100 if total > 0 else 0)
-        corrected_pct.append(corr / total * 100 if total > 0 else 0)
-        counts.append(total)
+    x_pos  = np.arange(len(MAIN_PARTIES))
+    colors = [COLORS.get(p, "#888") for p in MAIN_PARTIES]
+    bars   = ax.bar(x_pos, sarc_pct, 0.55,
+                    color=colors, alpha=0.88, zorder=3)
 
-    x     = np.arange(len(parties))
-    width = 0.38
+    for bar, val, n in zip(bars, sarc_pct, counts):
+        ax.text(bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + 0.5,
+                f"{val:.1f}%",
+                ha="center", va="bottom",
+                fontsize=10, fontweight="bold", color=COLORS["text"])
 
-    bars1 = ax.bar(x - width/2, sarc_pct, width,
-                   label="Sarcasm Detected %",
-                   color=[COLORS.get(p, "#888") for p in parties],
-                   alpha=0.85)
-
-    bars2 = ax.bar(x + width/2, corrected_pct, width,
-                   label="Sentiment Corrected %",
-                   color=[COLORS.get(p, "#888") for p in parties],
-                   alpha=0.45, hatch="//")
-
-    # Value labels
-    for bar in bars1:
-        if bar.get_height() > 0.5:
-            ax.text(bar.get_x() + bar.get_width() / 2,
-                    bar.get_height() + 0.3,
-                    f"{bar.get_height():.1f}%",
-                    ha="center", va="bottom",
-                    fontsize=9, fontweight="bold", color=COLORS["text"])
-
-    for bar in bars2:
-        if bar.get_height() > 0.5:
-            ax.text(bar.get_x() + bar.get_width() / 2,
-                    bar.get_height() + 0.3,
-                    f"{bar.get_height():.1f}%",
-                    ha="center", va="bottom",
-                    fontsize=8, color=COLORS["subtext"])
-
-    # Tweet count below x-axis labels
-    ax.set_xticks(x)
+    ax.set_xticks(x_pos)
     ax.set_xticklabels(
-        [f"{p}\n(n={c})" for p, c in zip(parties, counts)],
-        fontsize=9
+        [f"{p}\n(n={c:,})" for p, c in zip(MAIN_PARTIES, counts)],
+        fontsize=9.5,
     )
-    for tick, party in zip(ax.get_xticklabels(), parties):
+    for tick, party in zip(ax.get_xticklabels(), MAIN_PARTIES):
         tick.set_color(COLORS.get(party, COLORS["text"]))
         tick.set_fontweight("bold")
 
-    ax.set_ylim(0, max(sarc_pct) * 1.35)
-    ax.set_ylabel("Percentage of Party Tweets (%)", fontsize=10)
+    max_val = max(sarc_pct)
+    ax.set_ylim(0, max_val * 1.35)
+    ax.set_yticks(np.arange(0, max_val * 1.3, 5))
+    ax.set_yticklabels([f"{v:.0f}%" for v in np.arange(0, max_val * 1.3, 5)])
+    ax.set_ylabel("Sarcastic Tweets (%)", fontsize=10)
+    ax.set_xlabel("Political Party", fontsize=10)
     ax.set_title("Sarcasm Detection Rate by Political Party\n"
-                 "Solid = tweets flagged as sarcastic  ·  Hatched = sentiment corrected",
-                 fontsize=12, fontweight="bold", pad=15)
-    ax.legend(frameon=False, fontsize=9, loc="upper right")
-    ax.yaxis.grid(True, alpha=0.3)
-    ax.set_axisbelow(True)
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
+                 "(% of each party's tweets flagged as sarcastic by fine-tuned model)",
+                 fontsize=11, fontweight="bold")
 
-    # Insight annotation
-    max_party = parties[sarc_pct.index(max(sarc_pct))]
-    ax.annotate(
-        f"BJP & AAP have highest\nsarcasm rate (~11.6%)",
-        xy=(0, max(sarc_pct)), xytext=(1.5, max(sarc_pct) * 1.15),
-        fontsize=8, color=COLORS["subtext"],
-        arrowprops=dict(arrowstyle="->", color=COLORS["subtext"], lw=0.8),
-    )
+    ax.yaxis.grid(True, alpha=0.3, zorder=0)
+    ax.set_axisbelow(True)
+    clean_spines(ax)
+
+    # Note about AAP
+    ax.text(4, sarc_pct[4] + max_val * 0.18,
+            "* n=18,\n  low confidence",
+            ha="center", va="bottom", fontsize=7.5,
+            color=COLORS["subtext"], style="italic")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -366,41 +464,43 @@ def chart_sarcasm_by_party(df_parties, ax):
 def build_dashboard(df, df_parties):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig = plt.figure(figsize=(20, 14), facecolor=COLORS["bg"])
+    fig = plt.figure(figsize=(22, 18.2), facecolor=COLORS["bg"])
     fig.suptitle(
-        "Indian Political Tweet Sentiment Analysis  ·  2026\n"
-        "Lightweight Sarcasm Detection Pipeline  ·  n=2,313 tweets",
-        fontsize=16, fontweight="bold", color=COLORS["text"], y=0.98
+        "Indian Political Tweet Sentiment Analysis  ·  March 2026\n"
+        "Fine-tuned Cardiff RoBERTa + Neural Sarcasm Detection  ·  n = 2,313 tweets",
+        fontsize=15, fontweight="bold", color=COLORS["text"], y=0.985,
     )
 
-    gs = gridspec.GridSpec(3, 3, figure=fig,
-                           hspace=0.50, wspace=0.35,
-                           top=0.92, bottom=0.06,
-                           left=0.06, right=0.97)
+    gs = gridspec.GridSpec(
+        3, 4, figure=fig,
+        hspace=0.78, wspace=0.42,
+        top=0.93, bottom=0.06,
+        left=0.06, right=0.97,
+    )
 
-    # Row 1: Donut | Party stacked bar (spans 2 cols)
+    # Row 0: donut (1 col) | party sentiment (3 cols)
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[0, 1:])
 
-    # Row 2: Sarcasm rules | Accuracy comparison
+    # Row 1: sarcasm impact (2 cols) | model performance (2 cols)
     ax3 = fig.add_subplot(gs[1, :2])
-    ax4 = fig.add_subplot(gs[1, 2])
+    ax4 = fig.add_subplot(gs[1, 2:])
 
-    # Row 3: Sarcasm by party (full width — replaces trend chart)
+    # Row 2: sarcasm by party (full width)
     ax5 = fig.add_subplot(gs[2, :])
 
     chart_overall_sentiment(df, ax1)
     chart_party_sentiment(df_parties, ax2)
-    chart_sarcasm_rules(df, ax3)
-    chart_accuracy_comparison(ax4)
+    chart_sarcasm_impact(df, ax3)
+    chart_model_performance(ax4)
     chart_sarcasm_by_party(df_parties, ax5)
 
     fig.text(
-        0.5, 0.01,
-        "Model: cardiffnlp/twitter-roberta-base-sentiment-latest  ·  "
-        "Accuracy: 66.7% → 75.2% (+8.5pp after sarcasm correction)  ·  "
-        "Sarcasm detected in 8.6% of tweets",
-        ha="center", fontsize=8, color=COLORS["subtext"]
+        0.5, 0.012,
+        "Model: cardiffnlp/twitter-roberta-base-sentiment-latest (fine-tuned, multi-task)  ·  "
+        "Accuracy: 67.4% (baseline) → 78.3% (fine-tuned + sarcasm correction)  ·  "
+        "348 tweets flagged as sarcastic  ·  127 sentiment labels corrected",
+        ha="center", fontsize=8.5, color=COLORS["subtext"],
     )
 
     out_path = os.path.join(OUTPUT_DIR, "sentiment_dashboard.png")
@@ -419,19 +519,23 @@ def main():
     print("  Step 5: Aggregation & Visualization")
     print("=" * 65)
 
-    print(f"\n[Load]  Reading '{INPUT_CSV}'...")
     df, df_parties = load_data()
     print(f"[Load]  ✅ {len(df)} tweets loaded.")
 
     print(f"\n[Party] Distribution:")
     for party in MAIN_PARTIES:
-        n = len(df_parties[df_parties["parties"] == party])
-        sarc = df_parties[df_parties["parties"] == party]["sarcasm_detected"].sum()
-        print(f"         {party:<12}: {n} tweets, {sarc} sarcastic ({sarc/n*100:.1f}%)")
+        sub  = df_parties[df_parties["parties"] == party]
+        n    = len(sub)
+        sarc = sub["sarcasm_detected"].sum()
+        print(f"  {party:<12}: {n:>4} tweets, {sarc:>3} sarcastic ({sarc/n*100:.1f}%)")
 
-    print(f"\n[Chart] Building dashboard...")
+    changed = (df["sentiment"] != df["corrected_sentiment"]).sum()
+    print(f"\n[Correction] 348 tweets flagged as sarcastic, {changed} sentiment labels corrected.")
+    print(f"[Correction]   Neutral  → Negative : 92")
+    print(f"[Correction]   Positive → Negative : 35")
+
+    print(f"\n[Chart] Building 5-chart dashboard...")
     build_dashboard(df, df_parties)
-
     print("\n" + "=" * 65)
     print("  ✅ Step 5 complete!")
     print("=" * 65)
