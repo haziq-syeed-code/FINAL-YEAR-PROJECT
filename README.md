@@ -3,7 +3,6 @@
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.6-red?logo=pytorch)
 ![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-yellow?logo=huggingface)
-![License](https://img.shields.io/badge/License-MIT-green)
 ![VTU](https://img.shields.io/badge/VTU-Final%20Year%20Project-orange)
 
 > Final Year B.E. Project — Dept. of Information Science and Engineering, NMIT, VTU (2023–27)
@@ -317,5 +316,5 @@ If you use this work, please cite:
 ---
 
 ## 📝 License
-
-This project is released under the MIT License for academic and research purposes.
+This project is submitted as a final year academic project at NMIT, Bengaluru
+under Visvesvaraya Technological University (VTU). Not licensed for commercial use.
