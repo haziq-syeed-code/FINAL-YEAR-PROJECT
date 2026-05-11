@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![VTU](https://img.shields.io/badge/VTU-Final%20Year%20Project-orange)
 
-> Final Year B.E. Project — Dept. of Information Science and Engineering, NMIT, VTU (2025–26)
+> Final Year B.E. Project — Dept. of Information Science and Engineering, NMIT, VTU (2023–27)
 
 ---
 
