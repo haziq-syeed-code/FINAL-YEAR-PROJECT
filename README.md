@@ -128,7 +128,7 @@ If sarcastic AND sentiment is Positive or Neutral → override to Negative
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/haziq-syeed-code/sentiment-analysis.git
+git clone https://github.com/haziq-syeed-code/FINAL-YEAR-PROJECT.git
 cd sentiment-analysis
 pip install -r requirements.txt
 ```
